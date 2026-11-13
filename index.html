@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏰 Camelot-do-Sul: O Aniversário Proibido de Ren</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#ffd700; --gold-dim:#b8860b;
+    --purple:#9b59b6; --green:#2ecc71; --red:#e74c3c;
+    --stone:#4a4a5e; --stone-light:#6a6a7e; --stone-dark:#2a2a3e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow-x:hidden}
+  body{
+    font-family:'VT323',monospace;
+    background:linear-gradient(180deg,#0a0a2e 0%,#1a1a4e 45%,#2d1b4e 100%);
+    color:#e8e8ff; min-height:100vh;
+    image-rendering:pixelated;
+  }
+  #stars{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+  .star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle 2s infinite alternate}
+  @keyframes twinkle{0%{opacity:.2}100%{opacity:1}}
+
+  header{position:relative;z-index:10;text-align:center;padding:24px 12px 12px}
+  h1{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(10px,2.2vw,20px);line-height:1.8;color:var(--gold);
+    text-shadow:3px 3px 0 #000,6px 6px 0 rgba(155,89,182,.4);
+  }
+  .subtitle{font-size:clamp(16px,3vw,26px);color:var(--purple);margin-top:10px;text-shadow:2px 2px 0 #000}
+
+  /* ===== PLAYER DE MÚSICA ===== */
+  #music-bar{
+    position:relative;z-index:20;
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    flex-wrap:wrap;margin:6px auto 0;padding:10px 14px;
+    max-width:min(960px,96%);
+    background:rgba(20,20,40,.9);
+    border:2px solid var(--gold);border-radius:6px;
+    box-shadow:0 0 0 2px #000,0 4px 0 rgba(0,0,0,.5);
+  }
+  #music-bar .label{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(8px,1.4vw,11px);
+    color:var(--gold);
+  }
+  #music-bar button{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(8px,1.4vw,11px);
+    padding:10px 14px;color:#000;background:var(--gold);
+    border:3px solid #000;border-radius:4px;cursor:pointer;
+    box-shadow:0 4px 0 var(--gold-dim),0 6px 0 #000;
+    transition:transform .08s,box-shadow .08s;
+  }
+  #music-bar button:hover{transform:translateY(-1px)}
+  #music-bar button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--gold-dim),0 2px 0 #000}
+  #music-status{font-size:clamp(14px,2vw,18px);color:#c9b3ff;min-width:140px;text-align:center}
+  #music-status.playing{color:var(--green)}
+  #music-status.error{color:var(--red)}
+
+  /* Botão flutuante que aparece só quando o autoplay é bloqueado */
+  #unlock-btn{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    transform:translateX(-50%);
+    z-index:1000;
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(9px,1.8vw,13px);
+    padding:14px 22px;
+    color:#000;
+    background:var(--gold);
+    border:3px solid #000;
+    border-radius:6px;
+    cursor:pointer;
+    box-shadow:0 6px 0 var(--gold-dim),0 9px 0 #000,0 0 40px rgba(255,215,0,.5);
+    animation:pulse 1.2s infinite alternate;
+    display:none;
+  }
+  #unlock-btn.visible{display:block}
+  #unlock-btn.hidden{display:none !important}
+  #unlock-btn:active{transform:translateX(-50%) scale(.96)}
+  @keyframes pulse{
+    0%{transform:translateX(-50%) scale(1)}
+    100%{transform:translateX(-50%) scale(1.05)}
+  }
+  #unlock-close{
+    position:absolute;top:-10px;right:-10px;
+    width:22px;height:22px;padding:0;
+    font-family:sans-serif;font-size:13px;line-height:1;
+    background:#e74c3c;color:#fff;border:2px solid #000;border-radius:50%;
+    cursor:pointer;box-shadow:0 2px 0 #000;
+  }
+
+  .canvas-wrap{position:relative;z-index:5;display:flex;justify-content:center;margin:10px auto;padding:0 8px}
+  canvas#castle{
+    width:min(960px,100%);height:auto;display:block;
+    border:4px solid var(--stone-dark);border-radius:8px;
+    box-shadow:0 0 0 4px var(--stone),0 0 40px rgba(155,89,182,.5);
+    image-rendering:pixelated;background:#0a0a2e;
+  }
+
+  main{position:relative;z-index:10;max-width:960px;margin:0 auto;padding:16px 12px 80px}
+  .panel{
+    background:rgba(20,20,40,.85);
+    border:3px solid var(--stone-light);border-radius:6px;
+    padding:18px 16px;margin:20px 0;
+    box-shadow:0 0 0 2px #000,0 8px 0 rgba(0,0,0,.5);
+    opacity:0;transform:translateY(20px);
+    transition:opacity .6s,transform .6s;
+  }
+  .panel.visible{opacity:1;transform:translateY(0)}
+  .panel h2{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(9px,1.8vw,14px);color:var(--gold);
+    margin-bottom:14px;text-shadow:2px 2px 0 #000;
+  }
+  .panel p{font-size:clamp(17px,2.6vw,22px);line-height:1.5;margin:8px 0}
+  .love{color:#ff6b9d}
+  .secret{color:var(--green)}
+  .lizard{color:var(--red)}
+  .moon{color:#c9b3ff}
+
+  .btn-row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:16px 0}
+  button.action{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(8px,1.6vw,12px);
+    padding:14px 18px;color:#000;background:var(--gold);
+    border:3px solid #000;border-radius:4px;cursor:pointer;
+    box-shadow:0 5px 0 var(--gold-dim),0 8px 0 #000;
+    transition:transform .08s,box-shadow .08s;
+  }
+  button.action:hover{transform:translateY(-2px);box-shadow:0 7px 0 var(--gold-dim),0 10px 0 #000}
+  button.action:active{transform:translateY(4px);box-shadow:0 1px 0 var(--gold-dim),0 3px 0 #000}
+  button.action.purple{background:var(--purple);color:#fff;box-shadow:0 5px 0 #6c3483,0 8px 0 #000}
+  button.action.green{background:var(--green);box-shadow:0 5px 0 #1e8449,0 8px 0 #000}
+  button.action.red{background:var(--red);color:#fff;box-shadow:0 5px 0 #922b21,0 8px 0 #000}
+
+  #oracle-box{
+    margin-top:16px;padding:18px;background:rgba(155,89,182,.15);
+    border:2px solid var(--purple);border-radius:4px;
+    font-size:clamp(18px,2.8vw,24px);min-height:70px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    color:#e0c8ff;transition:transform .2s;
+  }
+
+  .mission{
+    display:flex;align-items:flex-start;gap:12px;
+    padding:12px;margin:10px 0;background:rgba(0,0,0,.35);
+    border-left:4px solid var(--gold);border-radius:4px;
+    font-size:clamp(16px,2.4vw,21px);cursor:pointer;
+    transition:background .2s,transform .2s;
+  }
+  .mission:hover{background:rgba(255,215,0,.1);transform:translateX(4px)}
+  .mission.done{opacity:.5;text-decoration:line-through;border-left-color:var(--green)}
+  .mission .box{
+    width:22px;height:22px;flex-shrink:0;border:2px solid var(--gold);
+    border-radius:3px;display:flex;align-items:center;justify-content:center;
+    font-size:16px;color:var(--green);
+  }
+
+  #toast-container{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+  .toast{
+    background:#1a1a2e;border:2px solid var(--gold);color:var(--gold);
+    padding:10px 16px;border-radius:4px;font-size:18px;
+    box-shadow:0 4px 0 #000;max-width:280px;
+    animation:toastIn .3s ease-out;
+  }
+  @keyframes toastIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+  footer{
+    position:relative;z-index:10;text-align:center;
+    padding:30px 12px 40px;font-size:clamp(15px,2.2vw,20px);
+    color:#8888aa;border-top:2px dashed rgba(255,215,0,.2);margin-top:20px;
+  }
+  footer .warn{color:var(--red);margin-top:8px;font-size:clamp(16px,2.4vw,22px)}
+
+  .floaty{position:fixed;z-index:3;pointer-events:none;font-size:28px;animation:floatUp 8s linear forwards}
+  @keyframes floatUp{
+    0%{transform:translateY(0) rotate(0);opacity:0}
+    10%{opacity:.7}
+    90%{opacity:.7}
+    100%{transform:translateY(-100vh) rotate(360deg);opacity:0}
+  }
+
+  .shaking{animation:shake .5s}
+  @keyframes shake{
+    0%,100%{transform:translate(0,0)}
+    20%{transform:translate(-4px,2px)}
+    40%{transform:translate(4px,-2px)}
+    60%{transform:translate(-3px,3px)}
+    80%{transform:translate(2px,-2px)}
+  }
+
+  @media(max-width:600px){
+    .panel{padding:14px 12px}
+    button.action{padding:12px 14px}
+    #toast-container{top:8px;right:8px;left:8px}
+    .toast{max-width:100%}
+    #music-bar{flex-direction:column;gap:8px}
+    #unlock-btn{bottom:16px;font-size:10px;padding:12px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="toast-container"></div>
+
+<!-- Botão que só aparece se o autoplay for bloqueado -->
+<button id="unlock-btn" type="button">
+  🎵 TOCAR MÚSICA 🎵
+  <span id="unlock-close" title="fechar">✕</span>
+</button>
+
+<header>
+  <h1>🏰 O REINO DE CAMELOT-DO-SUL APRESENTA 🏰<br>O ANIVERSÁRIO PROIBIDO DE REN!</h1>
+  <div class="subtitle">⚔️ Edição Deluxe • Completamente Zoiera • 100% Sigilosa ⚔️</div>
+</header>
+
+<!-- PLAYER DE MÚSICA -->
+<div id="music-bar">
+  <span class="label">🎵 HINO DO REINO</span>
+  <button id="music-toggle" onclick="toggleMusic()">⏸ PAUSAR</button>
+  <button id="music-restart" onclick="restartMusic()">🔁 RECOMEÇAR</button>
+  <span id="music-status">carregando...</span>
+</div>
+
+<div class="canvas-wrap">
+  <canvas id="castle" width="480" height="270"></canvas>
+</div>
+
+<main>
+  <section class="panel">
+    <h2>💜 DECLARAÇÃO OFICIAL DO REINO</h2>
+    <p>Ouvi dizer, ó <span class="love">Ren, meu amante secreto</span>, que teu aniversário passou...</p>
+    <p>E que este reino, em sua infinita sabedoria e <em>completa incapacidade de pontualidade</em>, esqueceu de te parabenizar na data certa.</p>
+    <p>Então aqui está: <span class="love">PARABÉNS ATRASADOS, REN! SEU TITÂNICO PEDERASTA!</span> 🎉🎂</p>
+    <p>Que teus dias sejam prósperos, teus cocos nunca falhem, e teu amor secreto permaneça <span class="moon">sob o luar de Selene</span>.</p>
+  </section>
+
+  <section class="panel">
+    <h2>🦎 PROTOCOLO DE SIGILO ABSOLUTO</h2>
+    <p class="secret">✅ A lagartixa NÃO PODE saber de nossas peripécias sob o luar de Selene.</p>
+    <p class="lizard">❌ Se a lagartixa perguntar, diga: "Estávamos inspecionando a umidade das pedras."</p>
+    <p class="lizard">❌ Se a lagartixa insistir, diga: "É uma atividade científica perfeitamente respeitável."</p>
+    <p class="lizard">❌ Se a lagartixa ameaçar contar, invoque o <strong>Protocolo Coco</strong>. 🥥</p>
+  </section>
+
+  <section class="panel">
+    <h2>🔮 ORÁCULO DE CAMELOT-DO-SUL</h2>
+    <p>Consulte os astros (ou o que sobrou deles) para saber o destino de Ren:</p>
+    <div class="btn-row">
+      <button class="action purple" onclick="consultOracle()">🔮 CONSULTAR O ORÁCULO</button>
+    </div>
+    <div id="oracle-box">O oráculo aguarda... toque no botão, mortal.</div>
+  </section>
+
+  <section class="panel">
+    <h2>⚔️ MISSÕES MEDIEVAIS ABSURDAS</h2>
+    <p>Clique para marcar como concluída. O reino precisa de você.</p>
+    <div id="missions"></div>
+    <div class="btn-row">
+      <button class="action green" onclick="resetMissions()">🔄 RESETAR MISSÕES</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>🎉 INVOCAR FESTA CAÓTICA</h2>
+    <p>Pressione o botão para invocar confetes, tremores e o caos digno de Monty Python.</p>
+    <div class="btn-row">
+      <button class="action red" onclick="chaosParty()">💥 INVOCAR FESTA CAÓTICA 💥</button>
+      <button class="action" onclick="cowButton()">🐄 SAUDAR A VACA SUSPEITA</button>
+      <button class="action purple" onclick="rabbitButton()">🐇 INTERROGAR O COELHO HEREge</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>🏰 Camelot-do-Sul • Edição Deluxe • Feito com pixel art, amor secreto e paranoia de lagartixa 🦎</p>
+  <p class="warn">⚠️ AVISO FINAL: Se a lagartixa perguntar, vocês estavam inspecionando a umidade das pedras. ⚠️</p>
+  <p style="margin-top:10px;color:#c9b3ff">🌙 Que Selene proteja este romance e que os cocos nunca falhem. 🥥</p>
+</footer>
+
+<!-- ÁUDIO: parabenos.mp3 no mesmo diretório -->
+<audio id="bg-music" src="parabens.mp3" loop preload="auto"></audio>
+
+<script>
+window.addEventListener('error', function(e){ console.warn('Erro capturado:', e.message); });
+
+/* ============================================================
+   MÚSICA
+   ============================================================ */
+var music = document.getElementById('bg-music');
+var musicStatus = document.getElementById('music-status');
+var musicToggle = document.getElementById('music-toggle');
+var unlockBtn = document.getElementById('unlock-btn');
+var unlockClose = document.getElementById('unlock-close');
+
+var musicStarted = false;
+var userDismissed = false;
+
+function setMusicStatus(txt, cls){
+  musicStatus.textContent = txt;
+  musicStatus.className = cls || '';
+}
+function updateToggleBtn(){
+  musicToggle.textContent = music.paused ? '▶ TOCAR' : '⏸ PAUSAR';
+}
+function showUnlock(){
+  if(musicStarted || userDismissed) return;
+  unlockBtn.classList.add('visible');
+  unlockBtn.classList.remove('hidden');
+}
+function hideUnlock(){
+  unlockBtn.classList.remove('visible');
+  unlockBtn.classList.add('hidden');
+}
+function tryPlayMusic(){
+  if(!music) return;
+  var p = music.play();
+  if(p && typeof p.then === 'function'){
+    p.then(function(){
+      musicStarted = true;
+      setMusicStatus('🎶 tocando!', 'playing');
+      updateToggleBtn();
+      hideUnlock();
+    }).catch(function(err){
+      console.warn('Autoplay bloqueado:', err);
+      setMusicStatus('🔒 clique para tocar', 'error');
+      showUnlock();
+    });
+  }
+}
+function toggleMusic(){
+  try{
+    if(music.paused){
+      music.play().then(function(){
+        musicStarted = true;
+        setMusicStatus('🎶 tocando!', 'playing');
+        updateToggleBtn();
+        hideUnlock();
+      }).catch(function(){
+        setMusicStatus('🔒 clique para tocar', 'error');
+        showUnlock();
+      });
+    } else {
+      music.pause();
+      setMusicStatus('⏸ pausada', '');
+      updateToggleBtn();
+    }
+  }catch(err){ console.warn('toggleMusic:', err); }
+}
+function restartMusic(){
+  try{
+    music.currentTime = 0;
+    music.play().then(function(){
+      musicStarted = true;
+      setMusicStatus('🎶 tocando!', 'playing');
+      updateToggleBtn();
+      hideUnlock();
+    }).catch(function(){
+      setMusicStatus('🔒 clique para tocar', 'error');
+      showUnlock();
+    });
+  }catch(err){ console.warn('restartMusic:', err); }
+}
+
+// Clique no botão grande (ou no ✕ de fechar)
+unlockBtn.addEventListener('click', function(e){
+  if(e.target === unlockClose){
+    e.stopPropagation();
+    userDismissed = true;
+    hideUnlock();
+    setMusicStatus('🔇 som desativado (clique em ▶ TOCAR)', '');
+    return;
+  }
+  e.stopPropagation();
+  tryPlayMusic();
+});
+
+// Destrava no primeiro clique/toque/tecla em qualquer lugar da página
+function unlockOnInteraction(e){
+  if(e && e.target === unlockClose) return;
+  if(!musicStarted && !userDismissed){
+    tryPlayMusic();
+  }
+  document.removeEventListener('click', unlockOnInteraction);
+  document.removeEventListener('touchstart', unlockOnInteraction);
+  document.removeEventListener('keydown', unlockOnInteraction);
+}
+document.addEventListener('click', unlockOnInteraction);
+document.addEventListener('touchstart', unlockOnInteraction);
+document.addEventListener('keydown', unlockOnInteraction);
+
+// Eventos do áudio
+music.addEventListener('loadedmetadata', function(){
+  setMusicStatus('⏳ pronto', '');
+  updateToggleBtn();
+});
+music.addEventListener('canplay', function(){
+  if(!musicStarted) setMusicStatus('⏳ pronto', '');
+});
+music.addEventListener('error', function(){
+  setMusicStatus('❌ parabens.mp3 não encontrado', 'error');
+  console.warn('Não foi possível carregar parabens.mp3. Verifique se está na mesma pasta.');
+});
+music.addEventListener('play', function(){
+  musicStarted = true;
+  setMusicStatus('🎶 tocando!', 'playing');
+  updateToggleBtn();
+  hideUnlock();
+});
+music.addEventListener('pause', function(){
+  setMusicStatus('⏸ pausada', '');
+  updateToggleBtn();
+});
+
+// Tenta autoplay ao carregar
+window.addEventListener('load', function(){
+  setTimeout(tryPlayMusic, 300);
+});
+
+/* ============================================================
+   ESTRELAS
+   ============================================================ */
+(function makeStars(){
+  try{
+    var wrap = document.getElementById('stars');
+    var n = 80;
+    for(var i=0;i<n;i++){
+      var s = document.createElement('div');
+      s.className='star';
+      s.style.left = ((i*37)%100)+'%';
+      s.style.top = ((i*53)%70)+'%';
+      s.style.animationDelay = ((i%20)/10)+'s';
+      s.style.animationDuration = (1.2+(i%15)/10)+'s';
+      var sz = (i%5===0)?3:2;
+      s.style.width=sz+'px'; s.style.height=sz+'px';
+      wrap.appendChild(s);
+    }
+  }catch(err){ console.warn('stars:', err); }
+})();
+
+/* ============================================================
+   PIXEL ART CASTELO
+   ============================================================ */
+(function drawCastle(){
+  try{
+    var cv = document.getElementById('castle');
+    if(!cv) return;
+    var ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    var W = cv.width, H = cv.height;
+
+    var C = {
+      sky1:'#0a0a2e', sky2:'#1a1a4e', sky3:'#2d1b4e',
+      moon:'#f5f0c8', moonGlow:'#c9b3ff', star:'#ffffff',
+      mount1:'#1a1a3a', mount2:'#2a2a4a', mountSnow:'#4a4a6a',
+      stone:'#4a4a5e', stoneL:'#6a6a7e', stoneD:'#2a2a3e', stoneD2:'#1e1e2e',
+      roof:'#8b1a1a', roofD:'#5a0f0f',
+      flag:'#ffd700', flagPole:'#b8860b',
+      window:'#ffd700', windowD:'#b8860b',
+      ground:'#1a2a1a', groundL:'#2a3a2a',
+      knight:'#7f8c8d', knightD:'#4a5a5a', knightShine:'#bdc3c7',
+      cow:'#f5f5dc', cowSpot:'#2a2a2a', cowPink:'#ffb6c1',
+      frog:'#2ecc71', frogD:'#1e8449', frogEye:'#f1c40f',
+      torch:'#ff6b00', torchGlow:'#ffcc00',
+      banner:'#9b59b6', bannerD:'#6c3483'
+    };
+    function px(x,y,w,h,color){ ctx.fillStyle=color; ctx.fillRect(x,y,w,h); }
+
+    for(var y=0;y<H;y++){
+      var t = y/H, col;
+      if(t<0.4) col=C.sky1; else if(t<0.7) col=C.sky2; else col=C.sky3;
+      px(0,y,W,1,col);
+    }
+    for(var i=0;i<50;i++){
+      px((i*97)%W, (i*61)%Math.floor(H*0.45), 1, 1, (i%7===0)?'#ffffaa':C.star);
+    }
+
+    var mx=390, my=48, mr=22;
+    ctx.globalAlpha=0.08;
+    ctx.beginPath(); ctx.arc(mx,my,mr+10,0,Math.PI*2);
+    ctx.fillStyle=C.moonGlow; ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2);
+    ctx.fillStyle=C.moon; ctx.fill();
+    ctx.fillStyle='#d8d0a8';
+    ctx.beginPath(); ctx.arc(mx-6,my-5,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx+7,my+4,5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx-2,my+9,3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx+9,my-8,3,0,Math.PI*2); ctx.fill();
+
+    function mountain(cx, baseY, w, h, col, snow){
+      for(var x=0;x<w;x++){
+        var tt = x/w, peak = Math.abs(tt-0.5)*2;
+        var hh = Math.floor(h*(1-peak));
+        px(cx-w/2+x, baseY-hh, 1, hh, col);
+        if(snow && hh>h*0.6) px(cx-w/2+x, baseY-hh, 1, 3, C.mountSnow);
+      }
+    }
+    mountain(80, 190, 160, 110, C.mount1, true);
+    mountain(200, 195, 140, 90, C.mount2, true);
+    mountain(330, 192, 150, 100, C.mount1, true);
+    mountain(440, 198, 120, 80, C.mount2, true);
+
+    px(0,200,W,70,C.ground);
+    for(var i2=0;i2<150;i2++){
+      px((i2*131)%W, 200+((i2*71)%70), 1, 1, (i2%2===0)?C.groundL:'#0f1f0f');
+    }
+
+    var baseY=200, castleX=240;
+    px(castleX-110, baseY-90, 220, 90, C.stone);
+    for(var y2=baseY-90;y2<baseY;y2+=8){
+      for(var x2=castleX-110;x2<castleX+110;x2+=12){
+        var off=((Math.floor(y2/8))%2)*6;
+        px(x2+off,y2,11,1,C.stoneD); px(x2+off,y2,1,8,C.stoneD);
+      }
+    }
+    for(var x3=castleX-110;x3<castleX+110;x3+=20){
+      px(x3, baseY-100, 12, 12, C.stone);
+      px(x3, baseY-100, 12, 2, C.stoneL);
+      px(x3+10, baseY-100, 2, 12, C.stoneD);
+    }
+
+    function tower(tx,ty,tw,th,roofH){
+      px(tx,ty,tw,th,C.stone);
+      for(var y3=ty;y3<ty+th;y3+=8){
+        for(var x4=tx;x4<tx+tw;x4+=10){
+          var off2=((Math.floor(y3/8))%2)*5;
+          px(x4+off2,y3,9,1,C.stoneD); px(x4+off2,y3,1,8,C.stoneD);
+        }
+      }
+      px(tx+tw-3,ty,3,th,C.stoneD);
+      px(tx,ty,2,th,C.stoneL);
+      for(var i3=0;i3<roofH;i3++){
+        px(tx-3+i3, ty-i3-1, tw+6-i3*2, 1, i3<2?C.roofD:C.roof);
+      }
+      px(tx+tw/2-1, ty-roofH-1, 2, 3, C.flagPole);
+      px(tx+tw/2+1, ty-roofH-1, 8, 4, C.flag);
+      px(tx+tw/2+1, ty-roofH-1, 8, 1, '#fff');
+      px(tx+tw/2-3, ty+20, 6, 10, C.windowD);
+      px(tx+tw/2-2, ty+21, 4, 8, C.window);
+    }
+    tower(castleX-115, baseY-130, 30, 130, 18);
+    tower(castleX+85, baseY-130, 30, 130, 18);
+    tower(castleX-20, baseY-150, 40, 150, 24);
+
+    px(castleX-18, baseY-40, 36, 40, C.stoneD2);
+    px(castleX-16, baseY-36, 32, 36, '#1a1a2a');
+    for(var i4=0;i4<12;i4++){
+      px(castleX-16+i4, baseY-36-i4, 32-i4*2, 1, '#0a0a15');
+    }
+    for(var x5=castleX-14;x5<castleX+14;x5+=6){
+      px(x5, baseY-32, 1, 32, '#3a3a4a');
+    }
+
+    function torch(tx,ty){
+      px(tx,ty,2,8,'#5a3a1a');
+      px(tx-1,ty-4,4,4,C.torch);
+      px(tx,ty-5,2,2,C.torchGlow);
+      ctx.globalAlpha=0.12;
+      ctx.beginPath(); ctx.arc(tx+1,ty-3,8,0,Math.PI*2);
+      ctx.fillStyle=C.torchGlow; ctx.fill();
+      ctx.globalAlpha=1;
+    }
+    torch(castleX-26, baseY-28);
+    torch(castleX+24, baseY-28);
+
+    px(castleX-1, baseY-175, 2, 14, C.flagPole);
+    px(castleX+1, baseY-175, 14, 8, C.banner);
+    px(castleX+1, baseY-175, 14, 1, '#c39bd3');
+    px(castleX+7, baseY-171, 3, 3, C.flag);
+
+    var kx=castleX-60, ky=baseY-30;
+    px(kx+4, ky+14, 3, 10, C.knightD);
+    px(kx+10, ky+14, 3, 10, C.knightD);
+    px(kx+2, ky+2, 14, 14, C.knight);
+    px(kx+3, ky+3, 12, 2, C.knightShine);
+    px(kx+2, ky+2, 2, 14, C.knightShine);
+    px(kx+14, ky+2, 2, 14, C.knightD);
+    px(kx+4, ky-8, 10, 10, C.knight);
+    px(kx+5, ky-7, 8, 2, C.knightShine);
+    px(kx+6, ky-4, 6, 2, C.stoneD2);
+    px(kx+8, ky-11, 2, 3, C.red);
+    px(kx+7, ky-13, 4, 2, C.red);
+    px(kx+17, ky-2, 2, 18, '#d0d0d0');
+    px(kx+16, ky+10, 4, 2, C.flag);
+    px(kx-6, ky+2, 8, 12, C.banner);
+    px(kx-6, ky+2, 8, 2, '#c39bd3');
+    px(kx-3, ky+6, 2, 4, C.flag);
+
+    var cx2=80, cy2=baseY-18;
+    px(cx2, cy2, 32, 18, C.cow);
+    px(cx2, cy2, 32, 2, '#ffffff');
+    px(cx2+6, cy2+4, 6, 5, C.cowSpot);
+    px(cx2+18, cy2+8, 7, 6, C.cowSpot);
+    px(cx2+22, cy2+2, 5, 4, C.cowSpot);
+    px(cx2+4, cy2+18, 4, 8, C.cowSpot);
+    px(cx2+22, cy2+18, 4, 8, C.cowSpot);
+    px(cx2+28, cy2+2, 14, 12, C.cow);
+    px(cx2+28, cy2+2, 14, 2, '#ffffff');
+    px(cx2+36, cy2+8, 6, 5, C.cowPink);
+    px(cx2+37, cy2+9, 1, 1, '#000');
+    px(cx2+40, cy2+9, 1, 1, '#000');
+    px(cx2+33, cy2+5, 3, 3, '#fff');
+    px(cx2+34, cy2+6, 2, 2, '#000');
+    px(cx2+30, cy2-1, 2, 3, '#e8d8b0');
+    px(cx2+38, cy2-1, 2, 3, '#e8d8b0');
+    px(cx2-2, cy2+4, 2, 8, C.cowSpot);
+    px(cx2-4, cy2+11, 4, 2, C.cowSpot);
+    px(cx2+12, cy2+16, 6, 4, C.cowPink);
+
+    var fx=380, fy=baseY-10;
+    px(fx, fy, 16, 10, C.frog);
+    px(fx, fy, 16, 2, '#58d68d');
+    px(fx-2, fy+8, 5, 3, C.frogD);
+    px(fx+13, fy+8, 5, 3, C.frogD);
+    px(fx+2, fy-4, 12, 6, C.frog);
+    px(fx+3, fy-7, 4, 4, C.frog);
+    px(fx+9, fy-7, 4, 4, C.frog);
+    px(fx+4, fy-6, 2, 2, C.frogEye);
+    px(fx+10, fy-6, 2, 2, C.frogEye);
+    px(fx+4, fy-6, 1, 1, '#000');
+    px(fx+10, fy-6, 1, 1, '#000');
+    px(fx+5, fy+2, 6, 1, C.frogD);
+
+    function bunting(x1,x2,yb){
+      ctx.strokeStyle='#b8860b'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x1,yb);
+      ctx.quadraticCurveTo((x1+x2)/2, yb+8, x2, yb); ctx.stroke();
+      var n=8;
+      for(var i5=0;i5<=n;i5++){
+        var tt2=i5/n;
+        var bx2=x1+(x2-x1)*tt2;
+        var by2=yb + 4*Math.sin(tt2*Math.PI)*2 - 8*(tt2*(1-tt2))*4;
+        px(bx2-1, by2, 3, 4, (i5%2===0)?C.banner:C.flag);
+      }
+    }
+    bunting(castleX-115, castleX+115, baseY-140);
+
+  }catch(err){ console.warn('castle:', err); }
+})();
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+function toast(msg, dur){
+  dur = dur || 3200;
+  try{
+    var cont = document.getElementById('toast-container');
+    var t = document.createElement('div');
+    t.className='toast'; t.textContent=msg;
+    cont.appendChild(t);
+    setTimeout(function(){
+      t.style.transition='opacity .3s, transform .3s';
+      t.style.opacity='0'; t.style.transform='translateX(120%)';
+      setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 320);
+    }, dur);
+  }catch(err){ console.warn('toast:', err); }
+}
+
+/* ============================================================
+   CONFETTI CASEIRO
+   ============================================================ */
+function fireConfetti(opts){
+  try{
+    opts = opts || {};
+    var count = opts.count || 80;
+    var colors = opts.colors || ['#ffd700','#9b59b6','#2ecc71','#e74c3c','#ff6b9d','#00ffff'];
+    var cv = document.createElement('canvas');
+    cv.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:998';
+    document.body.appendChild(cv);
+    var ctx = cv.getContext('2d');
+    cv.width=window.innerWidth; cv.height=window.innerHeight;
+    var parts=[];
+    for(var i=0;i<count;i++){
+      parts.push({
+        x: cv.width/2 + (Math.random()-0.5)*cv.width*0.4,
+        y: cv.height*0.5 + (Math.random()-0.5)*100,
+        vx: (Math.random()-0.5)*8,
+        vy: -Math.random()*10-4,
+        g: 0.25+Math.random()*0.15,
+        size: 3+Math.random()*5,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        rot: Math.random()*Math.PI,
+        vr: (Math.random()-0.5)*0.3,
+        life: 1
+      });
+    }
+    var frames=0;
+    function loop(){
+      frames++;
+      ctx.clearRect(0,0,cv.width,cv.height);
+      for(var j=0;j<parts.length;j++){
+        var p=parts[j];
+        p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 0.008;
+        if(p.life<=0 || p.y>cv.height+20) continue;
+        ctx.save();
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.globalAlpha = Math.max(0,p.life);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+        ctx.restore();
+      }
+      if(frames<180) requestAnimationFrame(loop);
+      else { if(cv.parentNode) cv.parentNode.removeChild(cv); }
+    }
+    loop();
+  }catch(err){ console.warn('confetti:', err); }
+}
+
+/* ============================================================
+   MISSÕES
+   ============================================================ */
+var MISSIONS = [
+  'Escalar a torre central sem acordar o dragão (que na verdade é um sapo grande)',
+  'Interrogar o coelho herege sobre a localização do Santo Graal',
+  'Verificar a umidade das pedras (cientificamente, é claro)',
+  'Subornar a vaca suspeita com capim de qualidade',
+  'Garantir que a lagartixa não descubra NADA sobre o luar de Selene',
+  'Decorar o salão com bandeirinhas e cocos cerimoniais',
+  'Enviar parabéns atrasados ao Ren com pompa e circunstância',
+  'Encontrar o coelho herege novamente (ele fugiu)',
+  'Convencer os nobres de que o castelo não é uma maquete de papelão',
+  'Invadir a cozinha e roubar o bolo antes que a lagartixa veja'
+];
+var missionState = {};
+function renderMissions(){
+  try{
+    var box = document.getElementById('missions');
+    box.innerHTML='';
+    for(var i=0;i<MISSIONS.length;i++){
+      (function(idx){
+        var done = !!missionState[idx];
+        var div = document.createElement('div');
+        div.className='mission'+(done?' done':'');
+        div.innerHTML = '<div class="box">'+(done?'✔':'')+'</div><div>'+MISSIONS[idx]+'</div>';
+        div.onclick = function(){
+          missionState[idx] = !missionState[idx];
+          renderMissions();
+          if(missionState[idx]) toast('✅ Missão concluída! O reino agradece.');
+        };
+        box.appendChild(div);
+      })(i);
+    }
+  }catch(err){ console.warn('missions:', err); }
+}
+function resetMissions(){
+  missionState = {}; renderMissions();
+  toast('🔄 Missões resetadas. O caos recomeça.');
+}
+
+/* ============================================================
+   ORÁCULO
+   ============================================================ */
+var PROPHECIES = [
+  '🌙 O luar de Selene abençoará teu romance... desde que a lagartixa não veja.',
+  '🥥 Os cocos estão favoráveis. Três cocos surgirão em teu caminho.',
+  '🐇 O coelho herege nega tudo. Ele sempre nega. Desconfie.',
+  '🏰 Camelot-do-Sul resistirá. Ou não. As previsões são incertas.',
+  '🐄 A vaca suspeita viu algo. Ela sempre vê. Cuidado.',
+  '⚔️ Um cavaleiro de armadura brilhante... ou só um cara com papel alumínio.',
+  '🦎 PERIGO! A lagartixa está mais perto do que você pensa. Fique quieto.',
+  '🌌 As estrelas dizem: "Parabéns atrasados, Ren!" Elas também esqueceram.',
+  '🥥 O Protocolo Coco foi ativado. Que os céus nos protejam.',
+  '🎂 O bolo existe. Ele é uma mentira. Ou não?',
+  '🔮 O oráculo está confuso. Tente novamente depois do almoço.',
+  '🐸 O sapo suspeito aprova este relacionamento secreto. Ele é discreto.',
+  '💜 Ren, teu amante secreto mandou um sinal. Ele está... em algum lugar.',
+  '🌙 Selene sorri. Isso é bom. Provavelmente.',
+  '🎉 A festa caótica foi aprovada pelos nobres. Os nobres são todos sapos.',
+  '🦎 A lagartixa perguntou da umidade das pedras. Nós respondemos. Ela não acreditou.',
+  '🥥 Que os cocos nunca falhem. Amém.',
+  '⚔️ Missão dada é missão... complicada. Mas vamos tentar.',
+  '🌙 O luar de Selene está forte hoje. Perfeito para peripécias secretas.'
+];
+function consultOracle(){
+  try{
+    var box = document.getElementById('oracle-box');
+    var finalMsg = PROPHECIES[Math.floor(Math.random()*PROPHECIES.length)];
+    var i=0;
+    var interval = setInterval(function(){
+      box.textContent = PROPHECIES[Math.floor(Math.random()*PROPHECIES.length)];
+      i++;
+      if(i>6){
+        clearInterval(interval);
+        box.textContent = finalMsg;
+        box.style.transform='scale(1.1)';
+        setTimeout(function(){ box.style.transform='scale(1)'; }, 200);
+        fireConfetti({count:20, colors:['#9b59b6','#ffd700']});
+      }
+    }, 80);
+  }catch(err){ console.warn('oracle:', err); }
+}
+
+/* ============================================================
+   FESTA CAÓTICA
+   ============================================================ */
+function chaosParty(){
+  try{
+    toast('💥 FESTA CAÓTICA INVOCADA! O reino treme!');
+    document.body.classList.add('shaking');
+    setTimeout(function(){ document.body.classList.remove('shaking'); }, 600);
+    fireConfetti({count:120});
+    setTimeout(function(){ fireConfetti({count:90}); }, 250);
+    setTimeout(function(){ fireConfetti({count:90}); }, 500);
+    var emojis = ['🥥','🦎','🐄','🐇','🏰','🌙','⚔️','💜','🎉','🐸'];
+    for(var i=0;i<15;i++){
+      (function(idx){
+        setTimeout(function(){
+          var el = document.createElement('div');
+          el.className='floaty';
+          el.textContent = emojis[idx%emojis.length];
+          el.style.left = ((idx*17)%100)+'%';
+          el.style.top = '100%';
+          el.style.animationDuration = (4+(idx%4))+'s';
+          document.body.appendChild(el);
+          setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 9000);
+        }, idx*120);
+      })(i);
+    }
+  }catch(err){ console.warn('chaos:', err); }
+}
+
+function cowButton(){
+  var msgs = [
+    '🐄 A vaca suspeita olha para você. Ela sabe.',
+    '🐄 MUUUU! (tradução: "a lagartixa está te observando")',
+    '🐄 A vaca aprova este romance secreto. Ela é discreta.',
+    '🐄 A vaca perguntou da umidade das pedras. Nós dissemos que estava ótima.',
+    '🐄 A vaca está usando um disfarce. É uma vaca. O disfarce é ser vaca.'
+  ];
+  toast(msgs[Math.floor(Math.random()*msgs.length)]);
+  fireConfetti({count:25, colors:['#f5f5dc','#2a2a2a','#ffb6c1']});
+}
+function rabbitButton(){
+  var msgs = [
+    '🐇 O coelho herege nega tudo. Ele sempre nega.',
+    '🐇 "EU NÃO SOU HEREge!" — disse o coelho herege.',
+    '🐇 O coelho fugiu. De novo.',
+    '🐇 O coelho tem dentes afiados e uma fé duvidosa.',
+    '🐇 "Que Santo Graal?" — perguntou o coelho, suspeitamente.',
+    '🐇 O coelho está lendo um livro proibido. É sobre cocos.'
+  ];
+  toast(msgs[Math.floor(Math.random()*msgs.length)]);
+  fireConfetti({count:25, colors:['#ffffff','#2ecc71','#e74c3c']});
+}
+
+/* ============================================================
+   REVEAL
+   ============================================================ */
+(function(){
+  try{
+    var els = document.querySelectorAll('.panel');
+    if('IntersectionObserver' in window){
+      var obs = new IntersectionObserver(function(entries){
+        for(var i=0;i<entries.length;i++){
+          if(entries[i].isIntersecting){
+            entries[i].target.classList.add('visible');
+            obs.unobserve(entries[i].target);
+          }
+        }
+      }, {threshold:0.1});
+      for(var i=0;i<els.length;i++) obs.observe(els[i]);
+    } else {
+      for(var j=0;j<els.length;j++) els[j].classList.add('visible');
+    }
+  }catch(err){
+    var all = document.querySelectorAll('.panel');
+    for(var k=0;k<all.length;k++) all[k].classList.add('visible');
+  }
+})();
+
+try{ renderMissions(); }catch(err){ console.warn('init missions:', err); }
+
+window.addEventListener('load', function(){
+  setTimeout(function(){ toast('🏰 Bem-vindo a Camelot-do-Sul, ó mortal!', 4000); }, 500);
+  setTimeout(function(){ toast('🦎 Lembre-se: a lagartixa não pode saber de nada.', 5000); }, 2000);
+  setTimeout(function(){ toast('💜 Parabéns atrasados, Ren!', 4000); }, 4000);
+  setTimeout(function(){ toast('🌙 Que Selene proteja este romance secreto.', 4000); }, 6000);
+});
+
+var typed='';
+document.addEventListener('keydown', function(e){
+  try{
+    typed += (e.key||'').toLowerCase();
+    if(typed.length>20) typed=typed.slice(-20);
+    if(typed.indexOf('lagartixa')>=0){
+      typed='';
+      toast('🦎 ALERTA! Você digitou LAGARTIXA! Ela pode estar ouvindo!', 5000);
+      document.body.classList.add('shaking');
+      setTimeout(function(){ document.body.classList.remove('shaking'); }, 800);
+      fireConfetti({count:60, colors:['#e74c3c','#2ecc71','#ffd700']});
+    }
+    if(typed.indexOf('ren')>=0){
+      typed='';
+      toast('💜 Ren detectado! O amante secreto está por perto!', 3500);
+      fireConfetti({count:40, colors:['#ff6b9d','#9b59b6','#ffd700']});
+    }
+  }catch(err){}
+});
+</script>
+</body>
+</html>
